@@ -38,7 +38,7 @@ class KMeansClusterer
       [NMatrix.ref(data), mean, std]
     end
 
-    def row_norms data
+    def self.row_norms data
       squared_data = NArray.ref(data)**2
       NMatrix.ref(squared_data).sum(0)
     end
