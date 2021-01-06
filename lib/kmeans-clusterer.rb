@@ -38,7 +38,7 @@ class KMeansClusterer
       [NMatrix.ref(data), mean, std]
     end
 
-    def self.row_norms data
+    def row_norms data
       squared_data = NArray.ref(data)**2
       NMatrix.ref(squared_data).sum(0)
     end
@@ -127,6 +127,7 @@ class KMeansClusterer
     opts[:k] = k
     typecode = TYPECODE[opts[:float_precision]]
 
+    data_weights = data.map { |d| d.pop } if k.is_a?(Array)
     data = Utils.ensure_matrix data, typecode
 
     if opts[:scale_data]
@@ -136,6 +137,7 @@ class KMeansClusterer
     end
 
     opts[:data] = data
+    opts[:data_weights] = data_weights
     opts[:row_norms] = Scaler.row_norms(data)
 
     bestrun = nil
@@ -160,12 +162,15 @@ class KMeansClusterer
 
 
   def initialize opts = {}
-    @k = opts[:k]
+    @size_constrained = opts[:k].is_a?(Array)
+    @k = @size_constrained ? opts[:k].size : opts[:k]
+    @k_constraints = opts[:k] if @size_constrained
     @init = opts[:init]
     @labels = opts[:labels] || []
     @row_norms = opts[:row_norms]
 
     @data = opts[:data]
+    @data_weights = opts[:data_weights]
     @points_count = @data ? @data.shape[1] : 0
     @mean = Utils.ensure_narray(opts[:mean]) if opts[:mean]
     @std = Utils.ensure_narray(opts[:std]) if opts[:std]
@@ -191,6 +196,14 @@ class KMeansClusterer
       @k.times do |cluster_id|
         dist = NArray.ref @distances[true, cluster_id].flatten
         mask = dist < min_distances
+        cluster_weight = 0
+        @data_weights[mask].each.with_index do |w, i|
+          if w + cluster_weight <= @k_constraints[cluster_id]
+            cluster_weight += w
+          else
+            mask[i] = 0
+          end
+        end if @size_constrained
         @cluster_assigns[mask] = cluster_id
         min_distances[mask] = dist[mask]
       end
