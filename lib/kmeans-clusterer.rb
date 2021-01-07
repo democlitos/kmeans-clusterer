@@ -193,19 +193,21 @@ class KMeansClusterer
       min_distances.fill! Float::INFINITY
       @distances = Distance.euclidean(@centroids, @data, @row_norms)
 
-      @k.times do |cluster_id|
-        dist = NArray.ref @distances[true, cluster_id].flatten
-        mask = dist < min_distances
-        cluster_weight = 0
-        @data_weights[mask].each.with_index do |w, i|
-          if w + cluster_weight <= @k_constraints[cluster_id]
-            cluster_weight += w
-          else
-            mask[i] = 0
-          end
-        end if @size_constrained
-        @cluster_assigns[mask] = cluster_id
-        min_distances[mask] = dist[mask]
+      while @cluster_assigns.eq(0).sum != 0
+        @k.times do |cluster_id|
+          dist = NArray.ref @distances[true, cluster_id].flatten
+          mask = dist < min_distances
+          cluster_weight = 0
+          @data_weights[mask].each.with_index do |w, i|
+            if w + cluster_weight <= @k_constraints[cluster_id]
+              cluster_weight += w
+            else
+              mask[i] = 0
+            end
+          end if @size_constrained
+          @cluster_assigns[mask] = cluster_id
+          min_distances[mask] = dist[mask]
+        end
       end
 
       max_move = 0
