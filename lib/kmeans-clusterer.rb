@@ -171,6 +171,7 @@ class KMeansClusterer
 
     @data = opts[:data]
     @data_weights = opts[:data_weights]
+    @data_weights = NArray.cast(@data_weights) unless @data_weights.is_a?(NArray)
     @points_count = @data ? @data.shape[1] : 0
     @mean = Utils.ensure_narray(opts[:mean]) if opts[:mean]
     @std = Utils.ensure_narray(opts[:std]) if opts[:std]
@@ -203,7 +204,7 @@ class KMeansClusterer
             if w + cluster_weight <= @k_constraints[cluster_id]
               cluster_weight += w
             else
-              mask[true, i] = 0
+              mask[i] = 0
             end
           end if @size_constrained
           @cluster_assigns[mask] = cluster_id
