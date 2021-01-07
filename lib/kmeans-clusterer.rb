@@ -203,7 +203,7 @@ class KMeansClusterer
             if w + cluster_weight <= @k_constraints[cluster_id]
               cluster_weight += w
             else
-              mask[i] = 0
+              mask[true, i] = 0
             end
           end if @size_constrained
           @cluster_assigns[mask] = cluster_id
