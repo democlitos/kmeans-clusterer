@@ -192,8 +192,9 @@ class KMeansClusterer
 
       min_distances.fill! Float::INFINITY
       @distances = Distance.euclidean(@centroids, @data, @row_norms)
-
-      while @cluster_assigns.eq(0).sum != 0
+      
+      assigned_points = NArray.int(@points_count)
+      while assigned_points.sum != @points_count
         @k.times do |cluster_id|
           dist = NArray.ref @distances[true, cluster_id].flatten
           mask = dist < min_distances
@@ -206,6 +207,7 @@ class KMeansClusterer
             end
           end if @size_constrained
           @cluster_assigns[mask] = cluster_id
+          assigned_points[mask] = 1
           min_distances[mask] = dist[mask]
         end
       end
